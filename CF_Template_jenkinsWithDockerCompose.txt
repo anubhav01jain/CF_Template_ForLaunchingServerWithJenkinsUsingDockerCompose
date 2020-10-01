@@ -1,0 +1,91 @@
+{
+    "Description": "Create an EC2 instance by AWS CloudFormation",
+    "Resources": {
+        "SecurityGroupDemoSvrTraffic": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupName": "sgforec2",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "8080",
+                        "IpProtocol": "tcp",
+                        "ToPort": "8080"
+                    }
+                ],
+                "GroupDescription": "Security Group for demo server",
+                "VpcId": "vpc-65758618"
+            }
+        },
+        "EC2InstanceDemoSvr": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "AvailabilityZone": "us-east-1e",
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "DeleteOnTermination": "true",
+                            "VolumeSize": "8",
+                            "VolumeType": "gp2"
+                        }
+                    }
+                ],
+                "ImageId": "ami-0817d428a6fb68645",
+                "InstanceType": "t2.micro",
+                "KeyName": "anubhav",
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash\n",
+                                "sudo apt-get update \n",
+                                "sudo apt-get -y install docker.io \n",
+                                "sudo apt-get -y install docker-compose \n",
+                                "sudo mkdir /home/ubuntu/docker \n",
+                                "cd /home/ubuntu/docker/ \n",
+                                "sudo touch /home/ubuntu/docker/docker-compose.yml \n",
+                                "sudo chmod 777 /home/ubuntu/docker/docker-compose.yml \n",
+                                "echo \"version: '3'\nservices:\n\n  jenkins:\n    image: anubhav01jain/firstimage:1\n    ports:\n    - 8080:8080\" >> /home/ubuntu/docker/docker-compose.yml \n",
+                                "sudo docker-compose up -d \n",
+                                "\n"
+                            ]
+                        ]
+                    }
+                },
+                "NetworkInterfaces": [
+                    {
+                        "Description": "Primary network interface",
+                        "DeviceIndex": "0",
+                        "SubnetId": "subnet-1a36dc2b",
+                        "PrivateIpAddress": "172.31.48.4",
+                        "GroupSet": [
+                            {
+                                "Ref": "SecurityGroupDemoSvrTraffic"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
